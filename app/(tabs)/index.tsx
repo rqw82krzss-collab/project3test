@@ -1,10 +1,25 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Button, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, Button, Alert, ScrollView, TouchableOpacity } from 'react-native';
+import {styles } from './styles';
 
+interface WeatherData{ 
+  city: string;
+  country: string;
+  countryCode: string;
+  state: string;
+  temperature: number;
+  feelsLike : number;
+  humidity: number;
+  weatherCode : number;
+  dates: string[];
+  maxTemps :  number[];
+  minTemps : number[];
+}
 export default function HomeScreen() {
   const [city, setCity] = useState('');
-  const [weather, setWeather] = useState<any>(null);
+  const [weather, setWeather] = useState<WeatherData | null >(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isCelsius, setIsCelsius] = useState(false);
 
   const getCitySuggestions = async (text: string) => {
     setCity(text);
@@ -28,13 +43,14 @@ export default function HomeScreen() {
 
   const getWeather = async (selectedCity: string = city) => {
     const cleanCity = selectedCity.trim();
+    setSuggestions([]);
     if (!cleanCity.trim()) {
       Alert.alert('Error', 'Please enter a city');
       return;
     }
 
     try {
-      // Step 1: Get latitude and longitude from city name
+      //Get latitude and longitude from city name
       const geoResponse = await fetch(
         `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cleanCity)}&count=1`
       );
@@ -47,9 +63,10 @@ export default function HomeScreen() {
       }
 
       const location = geoData.results[0];
-      const { latitude, longitude, name, country } = location;
+      console.log('Location data:', JSON.stringify(location));
+      const { latitude, longitude, name, country, country_code: countryCode, admin1 :state } = location;
 
-      // Step 2: Get weather data using latitude and longitude
+      // Get weather data using latitude and longitude
       const weatherResponse = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto`
       );
@@ -58,6 +75,8 @@ export default function HomeScreen() {
       setWeather({
         city: name,
         country: country,
+        countryCode: countryCode,
+        state: state,
         temperature: weatherData.current.temperature_2m,
         feelsLike: weatherData.current.apparent_temperature,
         humidity: weatherData.current.relative_humidity_2m,
@@ -83,9 +102,41 @@ export default function HomeScreen() {
     return 'Unknown';
   };
 
+  const getWeatherEmoji = (code: number) => {
+    if (code === 0) return '☀️';
+    if (code === 1 || code === 2 || code === 3) return '⛅';
+    if (code === 45 || code === 48) return '🌫️';
+    if (code === 51 || code === 53 || code === 55) return '🌦️';
+    if (code === 61 || code === 63 || code === 65) return '🌧️';
+    if (code === 71 || code === 73 || code === 75) return '❄️';
+    if (code === 95) return '⛈️';
+    return '🌡️';
+  };
+
+  const convertTemp = (f: number) => {
+    if (isCelsius) return ((f-32) * 5/9).toFixed(1);
+    return f.toFixed(1);
+  };
+
+  const tempUnit = isCelsius ? '°C' : '°F';
+
+  const getBackgroundColor = (code : number) => {
+    if (code === 0) return '#FFD700';
+    if (code === 1 || code === 2 || code === 3) return '#87CEEB';
+    if (code === 45 || code === 48) return '#B0B0B0';
+    if (code === 51 || code === 53 || code === 55) return '#4A90D9'; 
+    if (code === 61 || code === 63 || code === 65) return '#E8F4FC';
+    if (code === 71 || code === 73 || code === 75) return '#4A4A4A';
+    if (code === 95) return '#6B4F72';
+    return '#e6f2ff';
+  };
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Weather App</Text>
+    <ScrollView 
+    contentContainerStyle={[styles.container,
+    {backgroundColor: weather ? getBackgroundColor(weather.weatherCode) : '#e6f2ff' }
+    ]}>
+      <Text style={styles.title}>🌤️SkyWatch</Text>
 
       <TextInput
         style={styles.input}
@@ -108,94 +159,41 @@ export default function HomeScreen() {
                 getWeather(item.name);
               }}
             >
-              {item.name}, {item.country}
+              {item.name}, {item.country_code === 'US' ? `${item.admin1}, United States` : item.country}
             </Text>
           ))}
         </View>
       )}  
 
-      <Button 
-        title="Search" 
-        onPress ={() => {
-          void getWeather()
-         }}
-      />
+      <TouchableOpacity style={styles.button} onPress={() => { void getWeather(); }}>
+      < Text style={styles.buttonText}>Search</Text>
+    </TouchableOpacity>
 
+     <TouchableOpacity style={styles.toggleButton} onPress={() => setIsCelsius(!isCelsius)}>
+      <Text style={styles.buttonText}>{isCelsius ? 'Switch to °F' : 'Switch to °C'}</Text>
+      </TouchableOpacity>
       {weather && (
         <View style={styles.card}>
           <Text style={styles.cityName}>
-            {weather.city}, {weather.country}
+            {weather.city}, {weather.countryCode === 'US' ? weather.state: weather.country} 
           </Text>
-          <Text style={styles.temp}>{weather.temperature}°F</Text>
-          <Text>Feels like: {weather.feelsLike}°F</Text>
+          <Text style={styles.temp}>{convertTemp(weather.temperature)}{tempUnit}</Text>
+          <Text>Feels like: {convertTemp(weather.feelsLike)}{tempUnit}</Text>
           <Text>Humidity: {weather.humidity}%</Text>
-          <Text>Condition: {getWeatherDescription(weather.weatherCode)}</Text>
-          <Text style={{marginTop:20,fontWeight:'bold'}}>Weekly Forecast</Text>
+          <Text>Condition:  {getWeatherEmoji(weather.weatherCode)}{getWeatherDescription(weather.weatherCode)}</Text>
+          <Text style={{marginTop:20,fontWeight:'bold'}}>7 Day Forecast</Text>
           {weather.dates.slice(0,7).map((date: string, index: number)=>(
-            <View key={index} style={{marginTop:10}}>
-              <Text>
-                {new Date(date).toLocaleDateString('en-US', { weekday: 'long' })}: High {weather.maxTemps[index]}°F / Low {weather.minTemps[index]}°F
-              </Text>
-            </View>
-          ))}
+          <View key={index} style={styles.forecastRow}>
+          <Text style={styles.forecastDay}>
+          {new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}
+          </Text>
+          <Text style={styles.forecastTemps}>
+          ☀️{convertTemp(weather.maxTemps[index])}{tempUnit}  ❄️ {convertTemp(weather.minTemps[index])}{tempUnit}
+          </Text>
+      </View>
+      ))}
         </View>
       )}
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#e6f2ff',
-    padding: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 30,
-  },
-  input: {
-    width: '80%',
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 0,
-    borderWidth: 1,
-  },
-  card: {
-    marginTop: 30,
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-    alignItems: 'center',
-  },
-  cityName: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  temp: {
-    fontSize: 30,
-    marginBottom: 10,
-  },
-  suggestionItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderColor: '#ddd',  
-  },
-  suggestionsBox: {
-    width: '80%',
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    marginBottom: 15,
-    overflow: 'hidden',
-    elevation: 5,
-    borderColor: '#ddd',
-  },
-});
