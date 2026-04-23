@@ -121,32 +121,44 @@ export default function HomeScreen() {
   const tempUnit = isCelsius ? '°C' : '°F';
 
   const getBackgroundColor = (code : number) => {
-    if (code === 0) return '#FFD700';
-    if (code === 1 || code === 2 || code === 3) return '#87CEEB';
-    if (code === 45 || code === 48) return '#B0B0B0';
-    if (code === 51 || code === 53 || code === 55) return '#4A90D9'; 
-    if (code === 61 || code === 63 || code === 65) return '#E8F4FC';
-    if (code === 71 || code === 73 || code === 75) return '#4A4A4A';
-    if (code === 95) return '#6B4F72';
+    if (code === 0) return '#F7D046';
+    if (code === 1 || code === 2 || code === 3) return '#A7D3F2';
+    if (code === 45 || code === 48) return '#B7C9D6';
+    if (code === 51 || code === 53 || code === 55) return '#B7C9D6'; 
+    if (code === 61 || code === 63 || code === 65) return '#8FBBD9';
+    if (code === 71 || code === 73 || code === 75) return '#C9D6DF';
+    if (code === 95) return '#8E7CA6';
     return '#e6f2ff';
   };
 
   return (
-    <ScrollView 
-    contentContainerStyle={[styles.container,
-    {backgroundColor: weather ? getBackgroundColor(weather.weatherCode) : '#e6f2ff' }
-    ]}>
+    <ScrollView
+    contentContainerStyle={[
+    styles.container,
+    {
+      flexGrow: 1,
+      backgroundColor: weather
+        ? getBackgroundColor(weather.weatherCode)
+        : '#e6f2ff',
+    },
+    ]}
+  showsVerticalScrollIndicator={false}
+    >
       <Text style={styles.title}>🌤️SkyWatch</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter a city"
-        value={city}
-        onChangeText={(text) => {
-          void getCitySuggestions(text);
-        }}
-      />
+      {/*Search Bar */}
+      <View style = {styles.searchContainer}>
+        <Text style = {styles.searchIcon}>🔍</Text>
+        <TextInput
+          style = {styles.input}
+          placeholder = "Search City"
+          value = {city}
+          onChangeText = {(text) => getCitySuggestions(text)}
+          onSubmitEditing = {()=> getWeather()}
+          />
+      </View>
 
+      {/*Suggestions */}
       {suggestions.length > 0 && (
         <View style={styles.suggestionsBox}>
           {suggestions.map((item, index) => (
@@ -165,6 +177,7 @@ export default function HomeScreen() {
         </View>
       )}  
 
+      {/*Search and Switch Button */}
       <TouchableOpacity style={styles.button} onPress={() => { void getWeather(); }}>
       < Text style={styles.buttonText}>Search</Text>
     </TouchableOpacity>
@@ -172,24 +185,66 @@ export default function HomeScreen() {
      <TouchableOpacity style={styles.toggleButton} onPress={() => setIsCelsius(!isCelsius)}>
       <Text style={styles.buttonText}>{isCelsius ? 'Switch to °F' : 'Switch to °C'}</Text>
       </TouchableOpacity>
+      
+      {/*Forecast */}
       {weather && (
         <View style={styles.card}>
+          <Text style = {styles.watermark}>
+            {getWeatherEmoji(weather.weatherCode)}
+          </Text>
+
           <Text style={styles.cityName}>
             {weather.city}, {weather.countryCode === 'US' ? weather.state: weather.country} 
           </Text>
-          <Text style={styles.temp}>{convertTemp(weather.temperature)}{tempUnit}</Text>
-          <Text>Feels like: {convertTemp(weather.feelsLike)}{tempUnit}</Text>
-          <Text>Humidity: {weather.humidity}%</Text>
-          <Text>Condition:  {getWeatherEmoji(weather.weatherCode)}{getWeatherDescription(weather.weatherCode)}</Text>
-          <Text style={{marginTop:20,fontWeight:'bold'}}>7 Day Forecast</Text>
+
+          <View style = {styles.centerBlock}>
+            <View style = {styles.tempRow}>
+              <Text style={styles.temp}>{convertTemp(weather.temperature)}</Text>
+              <Text style = {styles.degree}>°</Text>
+            </View>
+            <TouchableOpacity 
+              onPress = {() => setIsCelsius(!isCelsius)}
+              style = {styles.unitToggle}
+            >
+              <Text style = {styles.unitText}>
+                <Text style={{ fontWeight: !isCelsius ? '600' : '300' }}>°F</Text>
+                  {' / '}
+                  <Text style={{ fontWeight: isCelsius ? '600' : '300' }}>°C</Text>
+              </Text>
+              </TouchableOpacity>
+            </View>
+
+
+          <Text style = {styles.detailsText}>
+            Feels like: {convertTemp(weather.feelsLike)}{tempUnit}
+          </Text>
+          <Text style = {styles.detailsText}>
+            Humidity: {weather.humidity}%
+          </Text>
+          <Text style = {styles.detailsText}>
+            Condition:{getWeatherEmoji(weather.weatherCode)}{getWeatherDescription(weather.weatherCode)}
+          </Text>
+
+          <Text style= {styles.forecastTitle}>7 Day Forecast</Text>
           {weather.dates.slice(0,7).map((date: string, index: number)=>(
           <View key={index} style={styles.forecastRow}>
           <Text style={styles.forecastDay}>
           {new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}
           </Text>
-          <Text style={styles.forecastTemps}>
-          ☀️{convertTemp(weather.maxTemps[index])}{tempUnit}  ❄️ {convertTemp(weather.minTemps[index])}{tempUnit}
-          </Text>
+          
+          <View key={index} style={styles.forecastRow}>
+        <Text style={styles.forecastDay}>
+        {new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}
+        </Text>
+        
+        <Text style = {styles.forecastIcon}>
+          {getWeatherEmoji(weather.weatherCode)}
+        </Text>
+        
+        <Text style={styles.forecastTemps}>
+        {convertTemp(weather.maxTemps[index])}° / {convertTemp(weather.minTemps[index])}°
+        </Text>
+        </View>
       </View>
       ))}
         </View>
