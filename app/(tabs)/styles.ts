@@ -123,7 +123,7 @@ export const styles = StyleSheet.create({
   alignItems: 'center',
 },
 toggleButton: {
-  backgroundColor: '#4A90D9',
+  backgroundColor: '#e1eef9da',
   borderColor: 'rgba(30,58,95,0.2)',
   paddingVertical: 8,
   paddingHorizontal: 18,
@@ -175,6 +175,6 @@ watermark: {
   right: -10,
   top: -10,
   fontSize: 120,
-  opacity: 0.08,
+  opacity: 0.25,
 },
 });

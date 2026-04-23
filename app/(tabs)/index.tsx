@@ -180,9 +180,9 @@ export default function HomeScreen() {
       {/*Search and Switch Button */}
       <TouchableOpacity style={styles.button} onPress={() => { void getWeather(); }}>
       < Text style={styles.buttonText}>Search</Text>
-    </TouchableOpacity>
+      </TouchableOpacity>
 
-     <TouchableOpacity style={styles.toggleButton} onPress={() => setIsCelsius(!isCelsius)}>
+      <TouchableOpacity style={styles.toggleButton} onPress={() => setIsCelsius(!isCelsius)}>
       <Text style={styles.buttonText}>{isCelsius ? 'Switch to °F' : 'Switch to °C'}</Text>
       </TouchableOpacity>
       
