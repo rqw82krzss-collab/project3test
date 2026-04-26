@@ -14,6 +14,7 @@ interface WeatherData{
   dates: string[];
   maxTemps :  number[];
   minTemps : number[];
+  dailyWeatherCodes : number[];
 }
 export default function HomeScreen() {
   const [city, setCity] = useState('');
@@ -68,7 +69,7 @@ export default function HomeScreen() {
 
       // Get weather data using latitude and longitude
       const weatherResponse = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto`
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&temperature_unit=fahrenheit&timezone=auto`
       );
       const weatherData = await weatherResponse.json();
 
@@ -85,6 +86,7 @@ export default function HomeScreen() {
         dates: weatherData.daily.time,
         maxTemps: weatherData.daily.temperature_2m_max,
         minTemps: weatherData.daily.temperature_2m_min,
+        dailyWeatherCodes: weatherData.daily.weather_code,
       });
     } catch (error) {
       Alert.alert('Error', 'Could not fetch weather');
@@ -181,10 +183,6 @@ export default function HomeScreen() {
       <TouchableOpacity style={styles.button} onPress={() => { void getWeather(); }}>
       < Text style={styles.buttonText}>Search</Text>
       </TouchableOpacity>
-
-      <TouchableOpacity style={styles.toggleButton} onPress={() => setIsCelsius(!isCelsius)}>
-      <Text style={styles.buttonText}>{isCelsius ? 'Switch to °F' : 'Switch to °C'}</Text>
-      </TouchableOpacity>
       
       {/*Forecast */}
       {weather && (
@@ -238,11 +236,11 @@ export default function HomeScreen() {
         </Text>
         
         <Text style = {styles.forecastIcon}>
-          {getWeatherEmoji(weather.weatherCode)}
+          {getWeatherEmoji(weather.dailyWeatherCodes[index])}
         </Text>
         
         <Text style={styles.forecastTemps}>
-        {convertTemp(weather.maxTemps[index])}° / {convertTemp(weather.minTemps[index])}°
+         H: {convertTemp(weather.maxTemps[index])}°  L: {convertTemp(weather.minTemps[index])}°
         </Text>
         </View>
       </View>

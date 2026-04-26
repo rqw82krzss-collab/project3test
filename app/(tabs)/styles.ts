@@ -64,14 +64,13 @@ export const styles = StyleSheet.create({
 
   tempRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   temp: {
     fontSize: 72,
     fontWeight: '300',
-    marginVertical: 10,
-    letterSpacing: -1,
     color: '#1E3A5F',
   },
 
@@ -146,12 +145,17 @@ forecastTitle:{
 forecastRow: {
   flexDirection: 'row',
   alignItems: 'center',
+  justifyContent: 'space-between',
   backgroundColor: '#f0f4ff',
   borderRadius: 18,
-  padding: 14,
+  paddingVertical: 8,
+  paddingHorizontal: 12,
   marginTop: 8,
   marginVertical: 6,
   width: '100%',
+  borderBottomWidth: 0.5,
+  borderBottomColor: '#dde3ec',
+
 },
 forecastDay: {
   fontWeight: '600',
@@ -172,9 +176,11 @@ forecastTemps: {
 
 watermark: {
   position: 'absolute',
-  right: -10,
-  top: -10,
-  fontSize: 120,
-  opacity: 0.25,
+  textAlign: 'center',
+  alignSelf: 'center',
+  top: 10,
+  fontSize: 80,
+  opacity: 0.2,
+  right: 10,
 },
 });
